@@ -17,23 +17,29 @@ from torchvision import transforms
 import cv2
 import torch.nn.functional as F
 
+
 def load_mnist():
-    data_full = datasets.MNIST(
+    mnist = datasets.MNIST(
         root='data',
         train='true',
         transform=ToTensor(),
         download=True,
     )
+    print("*******",mnist)
+    data_full = []
+    for i in range(0,len(mnist)):
+        if mnist[i][1] < 4 and mnist[i][1] != 0:
+            data_full.append(mnist[i])
     
-   
-    
+    """data_full = [data_full[key] for (key, label) in enumerate(data_full) if label == 1 or label == 2 or label == 3] """
+    print("**",len(data_full))
     # Split dataset to train,test and validation
 
     # train, test and validation seperation
     train_data, test_data, valid_data = torch.utils.data.random_split(data_full,
-                                                                      [30000, 20000, 10000])
+                                                                      [13000, 3000, 2831])
     # how to visualize the data
-    plt.imshow(data_full.data[0])
+    """ plt.imshow(data_full.data[0])
     plt.imshow(data_full.data[0], cmap='gray')
     plt.imshow(data_full.data[44], cmap='gray')
     # access the data but you need export it first
@@ -51,7 +57,7 @@ def load_mnist():
         plt.title('Number: ' + str(label))
         plt.axis('off')
         plt.imshow(img.squeeze(), cmap='gray')
-    plt.show()
+    plt.show()"""
     # let's put into a dict
     batch_size = 100
     loaders = {'train': torch.utils.data.DataLoader(train_data,
@@ -130,7 +136,7 @@ def resnet9():
     return ResNet9(1,10)
 
 
-def model_train_test_validate(model,num_epochs,train_part,loaders,device,optimizer,criterion,loss_list,loss_list_mean):
+def model_train_test_validate(save_path,model,num_epochs,train_part,loaders,device,optimizer,criterion,loss_list,loss_list_mean):
     iter = 0
     for epoch in range(num_epochs):
 
@@ -197,7 +203,10 @@ def model_train_test_validate(model,num_epochs,train_part,loaders,device,optimiz
     # visualize the loss
     plt.plot(loss_list)
     plt.plot(loss_list_mean)
+    torch.save(model, save_path)
+  
     return model
+    
 
     #Testing
     if iter % 100 == 0:
@@ -225,7 +234,8 @@ def model_train_test_validate(model,num_epochs,train_part,loaders,device,optimiz
         print('Test Accuracy: {}'.format(accuracy))
 
     # saving the model
-    torch.save(model.state_dict(), '/Users/shilpadeshpande/Downloads/resnet.pth')
+    
+    
 
     
     
@@ -237,10 +247,10 @@ def model_setup():
     # define the loss
     criterion = nn.CrossEntropyLoss()
     # we also need to define an optimizer
-    learning_rate = 0.1
+    learning_rate = 0.001
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
     # let's define how many epoch we want
-    num_epochs = 3
+    num_epochs = 10
     # initialize some loss lists
     loss_list = []
     loss_list_mean = []
@@ -275,11 +285,11 @@ def preprocess_custom_image(img_path):
     ret, thresh1 = cv2.threshold(img_resized, 127, 255, cv2.INTER_CUBIC)
     # img = img.resize((28, 28), Image.ANTIALIAS)
 
-    print(img_resized)
+    
 
     plt.imshow(thresh1, cmap='gray')
     # img_resized = cv2.bitwise_not(img_resized)
-    print(img_resized)
+    
 
     plt.imshow(img_resized, cmap='gray')
 
@@ -294,7 +304,7 @@ def preprocess_custom_image(img_path):
 def prediction_custom_image(ImgTensor,model):
     # Load custom image in to the model and predict the class
     output_img = model(ImgTensor)
-    print(output_img)
+    
     index = output_img.data.cpu().numpy().argmax()
     """pred = classes[index]"""
     print("predicted", index)
